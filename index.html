@@ -21,17 +21,20 @@
     }
 
     .swiper-slide {
+      width: 80vw;
+      height: 90vh;
+      max-width: 800px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .swiper-slide img {
-      max-width: 90vw;
-      max-height: 90vh;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       border-radius: 12px;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* reduced top-bottom shadow */
       transition: transform 0.2s ease;
       cursor: pointer;
       touch-action: none;
@@ -54,9 +57,15 @@
     }
 
     @media (max-width: 768px) {
+      .swiper-slide {
+        width: 95vw;
+        height: 80vh;
+      }
+
       .swiper-slide img {
-        max-width: 95vw;
-        max-height: 95vh;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
     }
   </style>
@@ -72,6 +81,7 @@
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
     const wrapper = document.getElementById('swiperWrapper');
+
     for (let i = 1; i <= 16; i++) {
       const slide = document.createElement('div');
       slide.className = 'swiper-slide';
@@ -106,6 +116,7 @@
       console.log("Flipbook will launch at page:", index);
     }
 
+    // Zoom on active image only
     let scale = 1;
     let activeImage = null;
 
@@ -116,7 +127,6 @@
       }
     }
 
-    // Desktop Zoom
     document.addEventListener('wheel', function (e) {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -130,40 +140,44 @@
     document.addEventListener('dblclick', () => resetZoom());
     swiper.on('slideChange', () => resetZoom());
 
-    // Mobile Pinch Zoom
-    let lastTouchDistance = 0;
+    // Pinch zoom and mobile gesture handling
+    let initialDistance = null;
+    let touchZoomImage = null;
 
-    function getTouchDist(e) {
-      const [a, b] = e.touches;
-      return Math.hypot(b.pageX - a.pageX, b.pageY - a.pageY);
+    function getDistance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
     }
 
-    document.addEventListener("touchstart", (e) => {
+    document.addEventListener('touchstart', function (e) {
       if (e.touches.length === 2) {
-        lastTouchDistance = getTouchDist(e);
+        initialDistance = getDistance(e.touches);
+        touchZoomImage = document.querySelector('.swiper-slide-active img');
       }
     });
 
-    document.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const newDistance = getTouchDist(e);
-        const delta = newDistance - lastTouchDistance;
-        lastTouchDistance = newDistance;
-
-        activeImage = document.querySelector('.swiper-slide-active img');
-        scale += delta * 0.005;
+    document.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2 && initialDistance && touchZoomImage) {
+        const currentDistance = getDistance(e.touches);
+        const delta = (currentDistance - initialDistance) * 0.005;
+        scale += delta;
         scale = Math.min(Math.max(1, scale), 3);
-        activeImage.style.transform = `scale(${scale})`;
+        touchZoomImage.style.transform = `scale(${scale})`;
+        initialDistance = currentDistance;
+        e.preventDefault();
       }
     }, { passive: false });
 
-    window.addEventListener("orientationchange", () => {
+    document.addEventListener('touchend', () => {
+      initialDistance = null;
+      touchZoomImage = null;
+    });
+
+    window.addEventListener('orientationchange', () => {
       setTimeout(() => {
-        // Force update swiper and reset zoom
         swiper.update();
-        resetZoom();
-      }, 300);
+      }, 500);
     });
   </script>
 </body>
