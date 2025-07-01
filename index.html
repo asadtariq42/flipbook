@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Coverflow Flipbook Launcher</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
   <style>
@@ -12,23 +12,15 @@
       height: 100%;
       background: #111;
       overflow: hidden;
-    }
-
-    .zoom-container {
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      touch-action: none;
-      transform-origin: center center;
+      font-family: sans-serif;
     }
 
     .swiper-container {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      top: 0;
+      left: 0;
     }
 
     .swiper-slide {
@@ -38,8 +30,8 @@
     }
 
     .swiper-slide img {
-      max-width: 90%;
-      max-height: 90%;
+      max-width: 90vw;
+      max-height: 90vh;
       object-fit: contain;
       border-radius: 12px;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
@@ -61,34 +53,33 @@
 
     @media (max-width: 768px) {
       .swiper-slide img {
-        max-width: 100%;
-        max-height: 70%;
+        max-width: 100vw;
+        max-height: 75vh;
       }
     }
   </style>
 </head>
 <body>
-  <div class="zoom-container" id="zoomContainer">
-    <div class="swiper-container">
-      <div class="swiper-wrapper" id="swiperWrapper">
-        <!-- Images inserted here -->
-        <script>
-          for (let i = 1; i <= 16; i++) {
-            document.write(`
-              <div class='swiper-slide'>
-                <img src="pages/page${i}.jpg" data-index="${i}" onclick="openFlipbook(${i})">
-              </div>
-            `);
-          }
-        </script>
-      </div>
-      <div class="swiper-button-next"></div>
-      <div class="swiper-button-prev"></div>
+  <div class="swiper-container">
+    <div class="swiper-wrapper" id="swiperWrapper">
+      <script>
+        for (let i = 1; i <= 16; i++) {
+          document.write(`
+            <div class='swiper-slide'>
+              <img src="pages/page${i}.jpg" data-index="${i}" onclick="openFlipbook(${i})">
+            </div>
+          `);
+        }
+      </script>
     </div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
+    let scale = 1;
+
     const swiper = new Swiper('.swiper-container', {
       effect: 'coverflow',
       grabCursor: true,
@@ -116,23 +107,28 @@
       alert("Launch flipbook viewer at page: " + index);
     }
 
-    // 🔍 ZOOM IN/OUT (Ctrl + Mouse Wheel or pinch-zoom on touch)
-    let scale = 1;
-    const container = document.getElementById('zoomContainer');
-
-    container.addEventListener('wheel', function (e) {
+    // ✅ ZOOM logic
+    document.addEventListener('wheel', (e) => {
       if (e.ctrlKey) {
         e.preventDefault();
         scale += e.deltaY * -0.001;
         scale = Math.min(Math.max(0.5, scale), 3);
-        container.style.transform = `scale(${scale})`;
+        document.body.style.zoom = scale;
       }
     }, { passive: false });
 
-    // Optional: reset zoom on double-click
-    container.addEventListener('dblclick', () => {
+    document.addEventListener('dblclick', () => {
       scale = 1;
-      container.style.transform = 'scale(1)';
+      document.body.style.zoom = 1;
+    });
+
+    // ✅ Handle orientation/resizing
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => swiper.update(), 300);
+    });
+
+    window.addEventListener('resize', () => {
+      swiper.update();
     });
   </script>
 </body>
