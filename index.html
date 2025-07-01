@@ -2,101 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>Coverflow Flipbook Launcher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flipbook Accurate</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
   <style>
-    html, body {
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      height: 100%;
-      background: #111;
-      overflow: hidden;
+    }
+
+    body {
+      background-color: #111;
+      color: white;
       font-family: sans-serif;
+      overflow-x: hidden;
     }
 
-    .zoom-container {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      touch-action: none;
-      transform-origin: center center;
-    }
-
-    .swiper-container {
-      position: absolute;
-      top: 0;
-      left: 0;
+    .swiper {
       width: 100vw;
       height: 100vh;
     }
 
     .swiper-slide {
+      background: #111;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: transform 0.3s ease;
     }
 
     .swiper-slide img {
-      max-width: 90%;
-      max-height: 90%;
-      object-fit: contain;
-      border-radius: 12px;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
-      cursor: pointer;
-      transition: transform 0.2s ease;
+      width: 90%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease-in-out;
     }
 
     .swiper-button-next,
     .swiper-button-prev {
       color: white;
-      width: 40px;
-      height: 40px;
-      background-color: rgba(0, 0, 0, 0.4);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: none;
-      transition: box-shadow 0.2s ease;
+      filter: drop-shadow(0 0 5px black);
+      transition: transform 0.2s;
     }
 
     .swiper-button-next:active,
     .swiper-button-prev:active {
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      transform: scale(1.1);
     }
 
-    @media (max-width: 768px) {
+    @media (orientation: landscape) {
       .swiper-slide img {
-        max-width: 100%;
-        max-height: 70%;
+        height: 90vh;
+        width: auto;
       }
     }
   </style>
 </head>
 <body>
-  <div class="zoom-container" id="zoomContainer">
-    <div class="swiper-container">
-      <div class="swiper-wrapper" id="swiperWrapper">
-        <!-- Dynamically insert slides -->
-        <script>
-          for (let i = 1; i <= 16; i++) {
-            document.write(`
-              <div class='swiper-slide'>
-                <img src="pages/page${i}.jpg" loading="lazy" data-index="${i}" onclick="openFlipbook(${i})">
-              </div>
-            `);
-          }
-        </script>
-      </div>
-      <div class="swiper-button-next"></div>
-      <div class="swiper-button-prev"></div>
-    </div>
+  <div class="swiper">
+    <div class="swiper-wrapper" id="pages"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
-    const swiper = new Swiper('.swiper-container', {
+    const swiper = new Swiper('.swiper', {
       effect: 'coverflow',
       grabCursor: true,
       centeredSlides: true,
@@ -104,7 +77,7 @@
       coverflowEffect: {
         rotate: 30,
         stretch: 0,
-        depth: 150,
+        depth: 100,
         modifier: 1,
         slideShadows: true,
       },
@@ -114,61 +87,38 @@
       },
       keyboard: {
         enabled: true,
-        onlyInViewport: true,
       },
-      loop: false,
     });
 
-    // Placeholder for flipbook launch
-    function openFlipbook(index) {
-      console.log(`Flipbook should open at page: ${index}`);
-      // window.location.href = `flipbook.html?page=${index}`;
+    const container = document.getElementById('pages');
+    for (let i = 1; i <= 16; i++) {
+      const slide = document.createElement('div');
+      slide.className = 'swiper-slide';
+
+      const img = document.createElement('img');
+      img.src = `pages/page${i}.jpg`; // Matches your file names
+
+      // Zoom with pinch or scroll
+      let scale = 1;
+      img.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+          e.preventDefault();
+          scale += e.deltaY * -0.001;
+          scale = Math.min(Math.max(1, scale), 3);
+          img.style.transform = `scale(${scale})`;
+        }
+      }, { passive: false });
+
+      img.addEventListener('dblclick', () => {
+        scale = 1;
+        img.style.transform = 'scale(1)';
+      });
+
+      slide.appendChild(img);
+      container.appendChild(slide);
     }
 
-    // ✅ Zoom with Ctrl+Mouse Wheel or Pinch
-    let scale = 1;
-    let startDist = 0;
-
-    const container = document.getElementById('zoomContainer');
-
-    container.addEventListener('wheel', function (e) {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        scale += e.deltaY * -0.001;
-        scale = Math.min(Math.max(0.5, scale), 3);
-        container.style.transform = `scale(${scale})`;
-      }
-    }, { passive: false });
-
-    container.addEventListener('dblclick', () => {
-      scale = 1;
-      container.style.transform = 'scale(1)';
-    });
-
-    // ✅ Pinch zoom (mobile)
-    container.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        startDist = Math.sqrt(dx * dx + dy * dy);
-      }
-    }, { passive: false });
-
-    container.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const newDist = Math.sqrt(dx * dx + dy * dy);
-        const zoomFactor = newDist / startDist;
-        scale = Math.min(Math.max(scale * zoomFactor, 0.5), 3);
-        container.style.transform = `scale(${scale})`;
-        startDist = newDist;
-      }
-    }, { passive: false });
-
-    // ✅ Orientation & Resize
+    // Ensure Swiper updates on orientation or resize
     window.addEventListener('orientationchange', () => {
       setTimeout(() => swiper.update(), 300);
     });
