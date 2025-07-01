@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coverflow Flipbook Launcher</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #111;
+      overflow: hidden;
+    }
+
+    .zoom-container {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      touch-action: none;
+      transform-origin: center center;
+    }
+
+    .swiper-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+    }
+
+    .swiper-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .swiper-slide img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+      color: white;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .swiper-slide img {
+        max-width: 100%;
+        max-height: 70%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-container" id="zoomContainer">
+    <div class="swiper-container">
+      <div class="swiper-wrapper" id="swiperWrapper">
+        <!-- Images inserted here -->
+        <script>
+          for (let i = 1; i <= 16; i++) {
+            document.write(`
+              <div class='swiper-slide'>
+                <img src="pages/page${i}.jpg" data-index="${i}" onclick="openFlipbook(${i})">
+              </div>
+            `);
+          }
+        </script>
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+  <script>
+    const swiper = new Swiper('.swiper-container', {
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 'auto',
+      coverflowEffect: {
+        rotate: 30,
+        stretch: 0,
+        depth: 150,
+        modifier: 1,
+        slideShadows: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+      keyboard: {
+        enabled: true,
+        onlyInViewport: true,
+      },
+      loop: false,
+    });
+
+    function openFlipbook(index) {
+      alert("Launch flipbook viewer at page: " + index);
+    }
+
+    // 🔍 ZOOM IN/OUT (Ctrl + Mouse Wheel or pinch-zoom on touch)
+    let scale = 1;
+    const container = document.getElementById('zoomContainer');
+
+    container.addEventListener('wheel', function (e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        scale += e.deltaY * -0.001;
+        scale = Math.min(Math.max(0.5, scale), 3);
+        container.style.transform = `scale(${scale})`;
+      }
+    }, { passive: false });
+
+    // Optional: reset zoom on double-click
+    container.addEventListener('dblclick', () => {
+      scale = 1;
+      container.style.transform = 'scale(1)';
+    });
+  </script>
+</body>
+</html>
