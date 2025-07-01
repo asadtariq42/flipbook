@@ -56,7 +56,7 @@
     @media (max-width: 768px) {
       .swiper-slide img {
         max-width: 95vw;
-        max-height: 80vh;
+        max-height: 95vh;
       }
     }
   </style>
@@ -72,7 +72,6 @@
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
     const wrapper = document.getElementById('swiperWrapper');
-
     for (let i = 1; i <= 16; i++) {
       const slide = document.createElement('div');
       slide.className = 'swiper-slide';
@@ -104,11 +103,9 @@
     });
 
     function openFlipbook(index) {
-      // Launch logic goes here, removed alert
       console.log("Flipbook will launch at page:", index);
     }
 
-    // Zoom only on current image
     let scale = 1;
     let activeImage = null;
 
@@ -119,6 +116,7 @@
       }
     }
 
+    // Desktop Zoom
     document.addEventListener('wheel', function (e) {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -131,6 +129,42 @@
 
     document.addEventListener('dblclick', () => resetZoom());
     swiper.on('slideChange', () => resetZoom());
+
+    // Mobile Pinch Zoom
+    let lastTouchDistance = 0;
+
+    function getTouchDist(e) {
+      const [a, b] = e.touches;
+      return Math.hypot(b.pageX - a.pageX, b.pageY - a.pageY);
+    }
+
+    document.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        lastTouchDistance = getTouchDist(e);
+      }
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const newDistance = getTouchDist(e);
+        const delta = newDistance - lastTouchDistance;
+        lastTouchDistance = newDistance;
+
+        activeImage = document.querySelector('.swiper-slide-active img');
+        scale += delta * 0.005;
+        scale = Math.min(Math.max(1, scale), 3);
+        activeImage.style.transform = `scale(${scale})`;
+      }
+    }, { passive: false });
+
+    window.addEventListener("orientationchange", () => {
+      setTimeout(() => {
+        // Force update swiper and reset zoom
+        swiper.update();
+        resetZoom();
+      }, 300);
+    });
   </script>
 </body>
 </html>
