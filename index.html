@@ -34,7 +34,7 @@
       height: 100%;
       object-fit: contain;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* reduced top-bottom shadow */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.6); /* Reduced height shadow */
       transition: transform 0.2s ease;
       cursor: pointer;
       touch-action: none;
@@ -47,7 +47,6 @@
       height: 38px;
       background-color: transparent;
       border-radius: 50%;
-      transition: background 0.2s ease;
       box-shadow: none !important;
     }
 
@@ -140,7 +139,7 @@
     document.addEventListener('dblclick', () => resetZoom());
     swiper.on('slideChange', () => resetZoom());
 
-    // Pinch zoom and mobile gesture handling
+    // ✅ Pinch zoom and mobile gesture handling
     let initialDistance = null;
     let touchZoomImage = null;
 
@@ -174,10 +173,22 @@
       touchZoomImage = null;
     });
 
+    // ✅ Double tap zoom toggle for mobile
+    let lastTap = 0;
+    document.addEventListener('touchend', function (e) {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        const img = document.querySelector('.swiper-slide-active img');
+        scale = scale > 1 ? 1 : 2;
+        img.style.transform = `scale(${scale})`;
+      }
+      lastTap = currentTime;
+    });
+
+    // ✅ Landscape auto adjustment
     window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        swiper.update();
-      }, 500);
+      setTimeout(() => swiper.update(), 500);
     });
   </script>
 </body>
