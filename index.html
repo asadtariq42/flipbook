@@ -114,9 +114,7 @@
       },
       loop: false,
       on: {
-        slideChange: () => {
-          resetZoom(); // Reset zoom on slide change
-        }
+        slideChange: () => resetZoom()
       }
     });
 
@@ -134,7 +132,7 @@
       scale = 1;
     }
 
-    // PC Zoom
+    // Desktop Zoom with Ctrl+wheel
     document.addEventListener('wheel', function (e) {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -147,7 +145,7 @@
 
     document.addEventListener('dblclick', () => resetZoom());
 
-    // Pinch zoom for mobile
+    // Mobile pinch zoom only
     let initialDistance = null;
     let touchZoomImage = null;
 
@@ -158,14 +156,14 @@
     }
 
     document.addEventListener('touchstart', function (e) {
-      if (e.touches.length === 2) {
+      if (window.innerWidth <= 768 && e.touches.length === 2) {
         initialDistance = getDistance(e.touches);
         touchZoomImage = document.querySelector('.swiper-slide-active img');
       }
     });
 
     document.addEventListener('touchmove', function (e) {
-      if (e.touches.length === 2 && initialDistance && touchZoomImage) {
+      if (window.innerWidth <= 768 && e.touches.length === 2 && initialDistance && touchZoomImage) {
         const currentDistance = getDistance(e.touches);
         const delta = (currentDistance - initialDistance) * 0.005;
         scale += delta;
@@ -181,22 +179,24 @@
       touchZoomImage = null;
     });
 
-    // Double tap zoom for mobile
+    // Double tap reset zoom (mobile only)
     let lastTap = 0;
     document.addEventListener('touchend', function (e) {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      if (tapLength < 300 && tapLength > 0) {
-        resetZoom();
+      if (window.innerWidth <= 768) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) {
+          resetZoom();
+        }
+        lastTap = currentTime;
       }
-      lastTap = currentTime;
     });
 
-    // Landscape adjustment
+    // Landscape auto adjustment
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
         swiper.update();
-        resetZoom(); // ensure image fits again
+        resetZoom();
       }, 500);
     });
   </script>
