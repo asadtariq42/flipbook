@@ -34,10 +34,12 @@
       height: 100%;
       object-fit: contain;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.6); /* Reduced height shadow */
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
       transition: transform 0.2s ease;
       cursor: pointer;
       touch-action: none;
+      display: block;
+      margin: 0 auto;
     }
 
     .swiper-button-next,
@@ -47,6 +49,7 @@
       height: 38px;
       background-color: transparent;
       border-radius: 50%;
+      transition: background 0.2s ease;
       box-shadow: none !important;
     }
 
@@ -65,6 +68,7 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+        margin: 0 auto;
       }
     }
   </style>
@@ -109,23 +113,28 @@
         onlyInViewport: true,
       },
       loop: false,
+      on: {
+        slideChange: () => {
+          resetZoom(); // Reset zoom on slide change
+        }
+      }
     });
 
     function openFlipbook(index) {
       console.log("Flipbook will launch at page:", index);
     }
 
-    // Zoom on active image only
     let scale = 1;
     let activeImage = null;
 
     function resetZoom() {
-      if (activeImage) {
-        activeImage.style.transform = 'scale(1)';
-        scale = 1;
-      }
+      document.querySelectorAll('.swiper-slide img').forEach(img => {
+        img.style.transform = 'scale(1)';
+      });
+      scale = 1;
     }
 
+    // PC Zoom
     document.addEventListener('wheel', function (e) {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -137,9 +146,8 @@
     }, { passive: false });
 
     document.addEventListener('dblclick', () => resetZoom());
-    swiper.on('slideChange', () => resetZoom());
 
-    // ✅ Pinch zoom and mobile gesture handling
+    // Pinch zoom for mobile
     let initialDistance = null;
     let touchZoomImage = null;
 
@@ -173,22 +181,23 @@
       touchZoomImage = null;
     });
 
-    // ✅ Double tap zoom toggle for mobile
+    // Double tap zoom for mobile
     let lastTap = 0;
     document.addEventListener('touchend', function (e) {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       if (tapLength < 300 && tapLength > 0) {
-        const img = document.querySelector('.swiper-slide-active img');
-        scale = scale > 1 ? 1 : 2;
-        img.style.transform = `scale(${scale})`;
+        resetZoom();
       }
       lastTap = currentTime;
     });
 
-    // ✅ Landscape auto adjustment
+    // Landscape adjustment
     window.addEventListener('orientationchange', () => {
-      setTimeout(() => swiper.update(), 500);
+      setTimeout(() => {
+        swiper.update();
+        resetZoom(); // ensure image fits again
+      }, 500);
     });
   </script>
 </body>
