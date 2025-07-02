@@ -34,12 +34,10 @@
       height: 100%;
       object-fit: contain;
       border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       transition: transform 0.2s ease;
       cursor: pointer;
       touch-action: none;
-      display: block;
-      margin: 0 auto;
     }
 
     .swiper-button-next,
@@ -49,7 +47,6 @@
       height: 38px;
       background-color: transparent;
       border-radius: 50%;
-      transition: background 0.2s ease;
       box-shadow: none !important;
     }
 
@@ -62,8 +59,6 @@
       .swiper-slide {
         width: 95vw;
         height: 80vh;
-        display: flex;
-        align-items: center;
         justify-content: center;
       }
 
@@ -71,7 +66,6 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-        margin: 0 auto;
       }
     }
   </style>
@@ -87,11 +81,10 @@
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
     const wrapper = document.getElementById('swiperWrapper');
-
     for (let i = 1; i <= 16; i++) {
       const slide = document.createElement('div');
       slide.className = 'swiper-slide';
-      slide.innerHTML = `<img src="pages/page${i}.jpg" data-index="${i}" onclick="openFlipbook(${i})" />`;
+      slide.innerHTML = `<img src="pages/page${i}.jpg" data-index="${i}" />`;
       wrapper.appendChild(slide);
     }
 
@@ -100,6 +93,8 @@
       grabCursor: true,
       centeredSlides: true,
       slidesPerView: 'auto',
+      slideToClickedSlide: true,
+      watchSlidesProgress: true,
       coverflowEffect: {
         rotate: 30,
         stretch: 0,
@@ -116,26 +111,19 @@
         onlyInViewport: true,
       },
       loop: false,
-      on: {
-        slideChange: () => resetZoom()
-      }
     });
 
-    function openFlipbook(index) {
-      console.log("Flipbook will launch at page:", index);
-    }
-
+    // Zoom (PC + Mobile)
     let scale = 1;
     let activeImage = null;
 
     function resetZoom() {
-      document.querySelectorAll('.swiper-slide img').forEach(img => {
-        img.style.transform = 'scale(1)';
-      });
-      scale = 1;
+      if (activeImage) {
+        activeImage.style.transform = 'scale(1)';
+        scale = 1;
+      }
     }
 
-    // Ctrl + Wheel Zoom (Desktop)
     document.addEventListener('wheel', function (e) {
       if (e.ctrlKey) {
         e.preventDefault();
@@ -147,11 +135,11 @@
     }, { passive: false });
 
     document.addEventListener('dblclick', () => resetZoom());
+    swiper.on('slideChange', () => resetZoom());
 
-    // ✅ Pinch Zoom & Double Tap Zoom Reset (Mobile only)
+    // Pinch Zoom for Mobile
     let initialDistance = null;
     let touchZoomImage = null;
-    let lastTap = 0;
 
     function getDistance(touches) {
       const dx = touches[0].clientX - touches[1].clientX;
@@ -160,49 +148,38 @@
     }
 
     document.addEventListener('touchstart', function (e) {
-      if (window.innerWidth <= 768) {
-        if (e.touches.length === 2) {
-          initialDistance = getDistance(e.touches);
-          touchZoomImage = document.querySelector('.swiper-slide-active img');
+      if (e.touches.length === 2) {
+        initialDistance = getDistance(e.touches);
+        touchZoomImage = document.querySelector('.swiper-slide-active img');
+      } else if (e.touches.length === 1) {
+        const now = new Date().getTime();
+        if (this.lastTap && (now - this.lastTap) < 300) {
+          resetZoom();
         }
+        this.lastTap = now;
       }
     });
 
     document.addEventListener('touchmove', function (e) {
-      if (window.innerWidth <= 768) {
-        if (e.touches.length === 2 && initialDistance && touchZoomImage) {
-          const currentDistance = getDistance(e.touches);
-          const delta = (currentDistance - initialDistance) * 0.005;
-          scale += delta;
-          scale = Math.min(Math.max(1, scale), 3);
-          touchZoomImage.style.transform = `scale(${scale})`;
-          initialDistance = currentDistance;
-          e.preventDefault();
-        }
+      if (e.touches.length === 2 && initialDistance && touchZoomImage) {
+        const currentDistance = getDistance(e.touches);
+        const delta = (currentDistance - initialDistance) * 0.005;
+        scale += delta;
+        scale = Math.min(Math.max(1, scale), 3);
+        touchZoomImage.style.transform = `scale(${scale})`;
+        initialDistance = currentDistance;
+        e.preventDefault();
       }
     }, { passive: false });
 
-    document.addEventListener('touchend', function (e) {
-      if (window.innerWidth <= 768) {
-        // Double Tap to Reset
-        const currentTime = new Date().getTime();
-        if (e.touches.length === 0) {
-          if (currentTime - lastTap < 300) {
-            resetZoom();
-          }
-          lastTap = currentTime;
-        }
-
-        initialDistance = null;
-        touchZoomImage = null;
-      }
+    document.addEventListener('touchend', () => {
+      initialDistance = null;
+      touchZoomImage = null;
     });
 
-    // ✅ Auto landscape update
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
         swiper.update();
-        resetZoom();
       }, 500);
     });
   </script>
